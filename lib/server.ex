@@ -23,7 +23,8 @@ defmodule Pooly.Server do
   defp child_spec(pool_config) do
     %{
       id: Pooly.PoolSupervisor.name(pool_config[:name]),
-      start: {Pooly.PoolSupervisor, :start_link, [pool_config]}
+      start: {Pooly.PoolSupervisor, :start_link, [pool_config]},
+      type: :supervisor
     }
   end
 
@@ -32,7 +33,7 @@ defmodule Pooly.Server do
   end
 
   def checkin(pool_name, worker) do
-    GenServer.call(Pooly.PoolServer.name(pool_name), {:checkin, worker})
+    GenServer.cast(Pooly.PoolServer.name(pool_name), {:checkin, worker})
   end
 
   def status(pool_name) do

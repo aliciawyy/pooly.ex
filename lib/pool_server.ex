@@ -2,8 +2,13 @@ defmodule Pooly.PoolServer do
   use GenServer
 
   defmodule State do
-    defstruct sup: nil, size: nil, mfa: nil, worker_sup: nil, workers: nil,
-      monitors: nil, name: nil
+    defstruct sup: nil,
+              size: nil,
+              mfa: nil,
+              worker_sup: nil,
+              workers: nil,
+              monitors: nil,
+              name: nil
   end
 
   def name(pool_name), do: :"#{pool_name}Server"
@@ -29,8 +34,10 @@ defmodule Pooly.PoolServer do
   end
 
   @impl true
-  def handle_info(:start_worker_supervisor,
-      state = %State{sup: sup, size: size, mfa: mfa, name: pool_name}) do
+  def handle_info(
+        :start_worker_supervisor,
+        state = %State{sup: sup, size: size, mfa: mfa, name: pool_name}
+      ) do
     # start the worker supervisor process via the top level Supervisor
     {:ok, worker_sup} = Supervisor.start_child(sup, supervisor_spec(pool_name))
     workers = prepopulate(size, worker_sup, mfa)
@@ -69,7 +76,8 @@ defmodule Pooly.PoolServer do
     %{
       id: Pooly.WorkerSupervisor.name(pool_name),
       start: {Pooly.WorkerSupervisor, :start_link, [pool_name]},
-      restart: :temporary
+      restart: :temporary,
+      type: :supervisor
     }
   end
 
