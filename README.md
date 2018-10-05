@@ -2,7 +2,7 @@
 
 This project implements a supervisor tree like the following
 
-[supervisor tree](./docs/supervisor_tree.png)
+![supervisor tree](./docs/supervisor_tree.png)
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
 by adding `pooly` to your list of dependencies in `mix.exs`:
