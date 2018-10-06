@@ -54,7 +54,6 @@ defmodule Pooly.PoolServer do
 
   """
   def handle_info({:DOWN, ref, _, _, _}, state = %State{monitors: monitors, workers: workers}) do
-    IO.puts("down ref #{ref}")
     case :ets.match(monitors, {:"$1", ref}) do
       [[pid]] ->
         :ets.delete(monitors, pid)
@@ -80,15 +79,17 @@ defmodule Pooly.PoolServer do
         new_state = %{state | workers: [new_worker(worker_sup, worker_spec) | workers]}
         {:noreply, new_state}
 
-      [[]] ->
+      [] ->
+        # Bug: the restarted process is not linked
         {:noreply, state}
     end
   end
 
+
   defp supervisor_spec(pool_name) do
     %{
       id: Pooly.WorkerSupervisor.name(pool_name),
-      start: {Pooly.WorkerSupervisor, :start_link, [self(), pool_name]},
+      start: {Pooly.WorkerSupervisor, :start_link, [pool_name]},
       restart: :temporary,
       type: :supervisor
     }
@@ -100,6 +101,7 @@ defmodule Pooly.PoolServer do
 
   defp new_worker(sup, worker_spec) do
     {:ok, worker} = DynamicSupervisor.start_child(sup, worker_spec)
+    Process.link(worker)
     worker
   end
 

@@ -3,8 +3,8 @@ defmodule Pooly.WorkerSupervisor do
 
   def name(pool_name), do: :"#{pool_name}WorkerSupervisor"
 
-  def start_link(pool_server, pool_name) do
-    DynamicSupervisor.start_link(__MODULE__, [pool_server], name: name(pool_name))
+  def start_link(pool_name) do
+    DynamicSupervisor.start_link(__MODULE__, [], name: name(pool_name))
   end
 
   @doc """
@@ -30,8 +30,7 @@ defmodule Pooly.WorkerSupervisor do
   withing the maximum seconds
   """
   @impl true
-  def init([pool_server]) do
-    Process.link(pool_server)
+  def init(_) do
     DynamicSupervisor.init(
       strategy: :one_for_one,
       max_restarts: 5,
