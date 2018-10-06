@@ -1,8 +1,12 @@
 # Pooly.ex
 
-This project implements a supervisor tree like the following
+This project implements a supervisor tree for Erlang process like the following
 
 ![supervisor tree](./docs/supervisor_tree.png)
+
+Servers are used to maintain the states of supervisors at the same level.
+
+## Other information
 
 If [available in Hex](https://hex.pm/docs/publish), the package can be installed
 by adding `pooly` to your list of dependencies in `mix.exs`:
