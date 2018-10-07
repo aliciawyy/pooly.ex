@@ -1,5 +1,7 @@
 # Pooly.ex
 
+[![Build Status](https://travis-ci.com/aliciawyy/pooly.ex.svg?branch=master)](https://travis-ci.com/aliciawyy/pooly.ex)
+
 This project implements a supervisor tree for Erlang process like the following
 
 ![supervisor tree](./docs/supervisor_tree.png)
