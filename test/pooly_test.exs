@@ -42,5 +42,6 @@ defmodule PoolyTest do
     assert Pooly.checkout(pool_name) == :noproc
     Pooly.checkin(pool_name, pid)
     assert Pooly.status(pool_name) == {0, 3}
+    assert Process.alive?(pid) == false
   end
 end

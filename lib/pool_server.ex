@@ -174,11 +174,17 @@ defmodule Pooly.PoolServer do
   @impl true
   def handle_cast(
         {:checkin, worker_pid},
-        %{workers: workers, monitors: monitors, overflow: overflow} = state
+        %{
+          workers: workers,
+          monitors: monitors,
+          overflow: overflow,
+          worker_sup: worker_sup
+        } = state
       ) do
     case :ets.lookup(monitors, worker_pid) do
       [{pid, ref}] when overflow > 0 ->
         handle_checkin({pid, ref}, monitors)
+        dismiss_child(worker_sup, pid)
         {:noreply, %{state | overflow: overflow - 1}}
 
       [{pid, ref}] ->
@@ -193,5 +199,10 @@ defmodule Pooly.PoolServer do
   defp handle_checkin({pid, ref}, monitors) do
     true = Process.demonitor(ref)
     true = :ets.delete(monitors, pid)
+  end
+
+  defp dismiss_child(worker_sup, pid) do
+    Process.unlink(pid)
+    Supervisor.terminate_child(worker_sup, pid)
   end
 end
