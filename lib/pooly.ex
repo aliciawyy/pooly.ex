@@ -8,9 +8,9 @@ defmodule Pooly do
     worker_spec = {SampleWorker, []}
 
     pools_config = [
-      [name: "Pool1", mfa: worker_spec, size: 2],
-      [name: "Pool2", mfa: worker_spec, size: 3],
-      [name: "Pool3", mfa: worker_spec, size: 4]
+      [name: "Pool1", mfa: worker_spec, size: 2, max_overflow: 2],
+      [name: "Pool2", mfa: worker_spec, size: 3, max_overflow: 2],
+      [name: "Pool3", mfa: worker_spec, size: 4, max_overflow: 2]
     ]
 
     start_pools(pools_config)

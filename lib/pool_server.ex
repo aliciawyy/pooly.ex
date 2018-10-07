@@ -8,13 +8,17 @@ defmodule Pooly.PoolServer do
               worker_sup: nil,
               workers: nil,
               monitors: nil,
-              name: nil
+              name: nil,
+              overflow: nil,
+              max_overflow: nil
   end
 
   def name(pool_name), do: :"#{pool_name}Server"
 
   def start_link(pool_sup, pool_config) do
-    GenServer.start_link(__MODULE__, [pool_sup, pool_config], name: name(pool_config[:name]))
+    GenServer.start_link(__MODULE__, [pool_sup, pool_config],
+      name: name(pool_config[:name])
+    )
   end
 
   @impl true
@@ -24,8 +28,19 @@ defmodule Pooly.PoolServer do
     init(pool_config, %State{sup: pool_sup, monitors: monitors})
   end
 
-  def init([name: pool_name, mfa: mfa, size: size], state) do
-    state = %{state | mfa: mfa, size: size, name: pool_name}
+  def init(
+        [name: pool_name, mfa: mfa, size: size, max_overflow: max_overflow],
+        state
+      ) do
+    state = %{
+      state
+      | mfa: mfa,
+        size: size,
+        name: pool_name,
+        overflow: 0,
+        max_overflow: max_overflow
+    }
+
     send(self(), :start_worker_supervisor)
     {:ok, state}
   end
@@ -53,7 +68,10 @@ defmodule Pooly.PoolServer do
   when it exits.
 
   """
-  def handle_info({:DOWN, ref, _, _, _}, state = %State{monitors: monitors, workers: workers}) do
+  def handle_info(
+        {:DOWN, ref, _, _, _},
+        state = %State{monitors: monitors, workers: workers}
+      ) do
     case :ets.match(monitors, {:"$1", ref}) do
       [[pid]] ->
         :ets.delete(monitors, pid)
@@ -81,8 +99,13 @@ defmodule Pooly.PoolServer do
       [{pid, ref}] ->
         true = Process.demonitor(ref)
         true = :ets.delete(monitors, pid)
+
         # Bug. A worker is already added back with the Supervisor's restart strategy
-        new_state = %{state | workers: [new_worker(worker_sup, worker_spec) | workers]}
+        new_state = %{
+          state
+          | workers: [new_worker(worker_sup, worker_spec) | workers]
+        }
+
         {:noreply, new_state}
 
       [] ->
@@ -111,32 +134,64 @@ defmodule Pooly.PoolServer do
   end
 
   @impl true
-  def handle_call(:checkout, {from_pid, _ref}, %{workers: workers, monitors: monitors} = state) do
+  def handle_call(
+        :checkout,
+        {from_pid, _ref},
+        %{
+          workers: workers,
+          monitors: monitors,
+          worker_sup: worker_sup,
+          mfa: worker_spec,
+          overflow: overflow,
+          max_overflow: max_overflow
+        } = state
+      ) do
     case workers do
       [worker | rest] ->
         ref = Process.monitor(from_pid)
         true = :ets.insert(monitors, {worker, ref})
         {:reply, worker, %{state | workers: rest}}
 
+      [] when 0 < max_overflow and overflow < max_overflow ->
+        worker = new_worker(worker_sup, worker_spec)
+        ref = Process.monitor(from_pid)
+        true = :ets.insert(monitors, {worker, ref})
+        {:reply, worker, %{state | overflow: overflow + 1}}
+
       [] ->
         {:reply, :noproc, state}
     end
   end
 
-  def handle_call(:status, {_from_pid, _ref}, %{workers: workers, monitors: monitors} = state) do
+  def handle_call(
+        :status,
+        {_from_pid, _ref},
+        %{workers: workers, monitors: monitors} = state
+      ) do
     {:reply, {length(workers), :ets.info(monitors, :size)}, state}
   end
 
   @impl true
-  def handle_cast({:checkin, worker_pid}, %{workers: workers, monitors: monitors} = state) do
+  def handle_cast(
+        {:checkin, worker_pid},
+        %{workers: workers, monitors: monitors, overflow: overflow} = state
+      ) do
     case :ets.lookup(monitors, worker_pid) do
+      [{pid, ref}] when overflow > 0 ->
+        handle_checkin({pid, ref}, monitors)
+        {:noreply, %{state | overflow: overflow - 1}}
+
       [{pid, ref}] ->
-        true = Process.demonitor(ref)
-        true = :ets.delete(monitors, pid)
+        handle_checkin({pid, ref}, monitors)
         {:noreply, %{state | workers: [pid | workers]}}
 
       [] ->
         {:noreply, state}
     end
+  end
+
+  defp handle_checkin({pid, ref}, monitors) do
+    true = Process.demonitor(ref)
+    true = :ets.delete(monitors, pid)
   end
 end

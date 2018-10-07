@@ -15,7 +15,9 @@ defmodule Pooly.Server do
 
   @impl true
   def handle_info({:start_pool, pool_config}, state) do
-    {:ok, _} = Supervisor.start_child(Pooly.PoolsSupervisor, child_spec(pool_config))
+    {:ok, _} =
+      Supervisor.start_child(Pooly.PoolsSupervisor, child_spec(pool_config))
+
     {:noreply, state}
   end
 
