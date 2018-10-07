@@ -70,7 +70,12 @@ defmodule Pooly.PoolServer do
   """
   def handle_info(
         {:EXIT, pid, _reason},
-        state = %State{monitors: monitors, workers: workers, worker_sup: worker_sup, mfa: worker_spec}
+        state = %State{
+          monitors: monitors,
+          workers: workers,
+          worker_sup: worker_sup,
+          mfa: worker_spec
+        }
       ) do
     case :ets.lookup(monitors, pid) do
       [{pid, ref}] ->
@@ -85,7 +90,6 @@ defmodule Pooly.PoolServer do
         {:noreply, state}
     end
   end
-
 
   defp supervisor_spec(pool_name) do
     %{
@@ -105,10 +109,6 @@ defmodule Pooly.PoolServer do
     Process.link(worker)
     worker
   end
-
-  def checkout, do: GenServer.call(__MODULE__, :checkout)
-  def status, do: GenServer.call(__MODULE__, :status)
-  def checkin(worker_pid), do: GenServer.cast(__MODULE__, {:checkin, worker_pid})
 
   @impl true
   def handle_call(:checkout, {from_pid, _ref}, %{workers: workers, monitors: monitors} = state) do

@@ -7,6 +7,7 @@ defmodule Pooly.MixProject do
       version: "0.1.0",
       elixir: "~> 1.7",
       start_permanent: Mix.env() == :prod,
+      aliases: aliases(),
       deps: deps()
     ]
   end
@@ -16,6 +17,12 @@ defmodule Pooly.MixProject do
     [
       extra_applications: [:logger],
       mod: {Pooly, []}
+    ]
+  end
+
+  defp aliases do
+    [
+      test: "test --no-start --cover"
     ]
   end
 
