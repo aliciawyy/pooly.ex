@@ -2,16 +2,16 @@ defmodule SampleWorker do
   use GenServer
 
   def start_link(_) do
-    GenServer.start_link(__MODULE__, :ok, [])
+    GenServer.start_link(__MODULE__, [], [])
+  end
+
+  @impl true
+  def init(_) do
+    {:ok, %{}}
   end
 
   def stop(pid) do
     GenServer.call(pid, :stop)
-  end
-
-  @impl true
-  def init(:ok) do
-    {:ok, %{}}
   end
 
   @impl true

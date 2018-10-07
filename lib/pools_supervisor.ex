@@ -9,6 +9,6 @@ defmodule Pooly.PoolsSupervisor do
   def init(_) do
     opts = [strategy: :one_for_one]
 
-    supervise([], opts)
+    Supervisor.init([], opts)
   end
 end

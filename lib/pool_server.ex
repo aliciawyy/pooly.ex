@@ -76,6 +76,7 @@ defmodule Pooly.PoolServer do
       [{pid, ref}] ->
         true = Process.demonitor(ref)
         true = :ets.delete(monitors, pid)
+        # Bug. A worker is already added back with the Supervisor's restart strategy
         new_state = %{state | workers: [new_worker(worker_sup, worker_spec) | workers]}
         {:noreply, new_state}
 
