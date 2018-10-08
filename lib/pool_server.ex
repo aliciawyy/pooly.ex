@@ -24,7 +24,7 @@ defmodule Pooly.PoolServer do
   @impl true
   def init([pool_sup, pool_config]) when is_pid(pool_sup) do
     Process.flag(:trap_exit, true)
-    monitors = :ets.new(:consumers, [:private, :named_table])
+    monitors = :ets.new(:consumers, [:private])
     init(pool_config, %State{sup: pool_sup, monitors: monitors})
   end
 
