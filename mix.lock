@@ -1,0 +1,3 @@
+%{
+  "erlex": {:hex, :erlex, "0.1.4", "8ec58198159e3bb9c96f924b6adbf21767d0c2795f08c1e14150a88cbfff86b4", [:mix], [], "hexpm"},
+}

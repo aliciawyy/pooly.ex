@@ -28,6 +28,7 @@ defmodule Pooly do
 
   :noproc is returned when no more worker available
   """
+  @spec checkout(String.t()) :: pid()
   def checkout(pool_name) do
     Pooly.Server.checkout(pool_name)
   end
@@ -36,6 +37,7 @@ defmodule Pooly do
   Once the consumer process is done with the worker, the process must
   return it to the pool with checkin
   """
+  @spec checkin(String.t(), pid()) :: :ok
   def checkin(pool_name, worker_pid) do
     Pooly.Server.checkin(pool_name, worker_pid)
   end
